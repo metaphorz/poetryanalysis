@@ -71,12 +71,52 @@
         #server-instructions button:hover {
             background-color: #2980b9;
         }
+        
+        #poem-loader {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        #poem-selector {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: white;
+            font-size: 14px;
+        }
+        
+        #load-poem-btn {
+            padding: 5px 15px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        #load-poem-btn:hover {
+            background-color: #219653;
+        }
     </style>
 </head>
 <body>
     <div id="header">
         <h1>Prosodic Poetry Analysis</h1>
         <div id="server-status">Checking server status...</div>
+        <div id="poem-loader">
+            <select id="poem-selector">
+                <option value="">-- Select a poem --</option>
+                <option value="poem1">Sonnet 30 (Shakespeare)</option>
+                <option value="poem2">Stopping by Woods (Frost)</option>
+                <option value="poem4">Sonnets from the Portuguese (Browning)</option>
+                <option value="poem3">Custom poem...</option>
+            </select>
+            <button id="load-poem-btn">Load Poem</button>
+            <input type="file" id="poem-file" accept=".txt" style="display:none;">
+        </div>
     </div>
     
     <iframe id="prosodic-frame" src="http://127.0.0.1:8181/" title="Prosodic Web Interface"></iframe>
@@ -127,6 +167,112 @@
             
             // Check server status every 10 seconds
             setInterval(checkServerStatus, 10000);
+            
+            // Sample poems
+            const poems = {
+                poem1: `When to the sessions of sweet silent thought
+I summon up remembrance of things past,
+I sigh the lack of many a thing I sought,
+And with old woes new wail my dear time's waste.
+Then can I drown an eye, unused to flow,
+For precious friends hid in death's dateless night,
+And weep afresh love's long since cancelled woe,
+And moan the expense of many a vanished sight.
+Then can I grieve at grievances foregone,
+And heavily from woe to woe tell o'er
+The sad account of fore-bemoanèd moan,
+Which I new pay as if not paid before.
+But if the while I think on thee, dear friend,
+All losses are restored and sorrows end.`,
+                poem2: `Whose woods these are I think I know.
+His house is in the village though;
+He will not see me stopping here
+To watch his woods fill up with snow.
+
+My little horse must think it queer
+To stop without a farmhouse near
+Between the woods and frozen lake
+The darkest evening of the year.
+
+He gives his harness bells a shake
+To ask if there is some mistake.
+The only other sound's the sweep
+Of easy wind and downy flake.
+
+The woods are lovely, dark and deep,
+But I have promises to keep,
+And miles to go before I sleep,
+And miles to go before I sleep.`,
+                poem4: `When our two souls stand up erect and strong
+Face to face, silent, drawing nigh and nigher
+Until the lengthening wings break into fire
+At either curvéd point, — what bitter wrong
+Can the earth do to us, that we should not long
+Be here contented ? Think. In mounting higher
+The angels would press on us, and aspire
+To drop some golden orb of perfect song
+Into our deep, dear silence. Let us stay
+Rather on earth, Belovèd, — where the unfit
+Contrarious moods of men recoil away
+And isolate pure spirits, and permit
+A place to stand and love in for a day
+With darkness and the death-hour rounding it`
+            };
+            
+            // Poem selector and load functionality
+            const poemSelector = document.getElementById('poem-selector');
+            const loadPoemBtn = document.getElementById('load-poem-btn');
+            const poemFile = document.getElementById('poem-file');
+            
+            loadPoemBtn.addEventListener('click', function() {
+                if (poemSelector.value === 'poem3') {
+                    // For custom poem, trigger file input
+                    poemFile.click();
+                } else if (poemSelector.value) {
+                    // For predefined poems, load directly
+                    loadPoemIntoFrame(poems[poemSelector.value]);
+                } else {
+                    alert('Please select a poem first');
+                }
+            });
+            
+            poemFile.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        loadPoemIntoFrame(e.target.result);
+                    };
+                    reader.readAsText(this.files[0]);
+                }
+            });
+            
+            function loadPoemIntoFrame(poemText) {
+                // Wait for iframe to load
+                prosodicFrame.onload = function() {
+                    setTimeout(function() {
+                        // Get the iframe's document
+                        const iframeDoc = prosodicFrame.contentDocument || prosodicFrame.contentWindow.document;
+                        
+                        // Find the textarea for poem input
+                        const textarea = iframeDoc.querySelector('textarea');
+                        if (textarea) {
+                            // Set the poem text
+                            textarea.value = poemText;
+                            
+                            // Trigger the textarea's input event to activate the UI
+                            const inputEvent = new Event('input', { bubbles: true });
+                            textarea.dispatchEvent(inputEvent);
+                            
+                            console.log('Poem loaded successfully');
+                        } else {
+                            console.error('Could not find textarea in Prosodic interface');
+                        }
+                    }, 1000); // Give the iframe a moment to fully initialize
+                };
+                
+                // Reload the iframe to ensure a clean state
+                prosodicFrame.src = prosodicFrame.src;
+            }
         });
     </script>
 </body>
