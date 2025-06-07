@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prosodic Poetry Analysis</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        
+        #header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        #server-status {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .status-running {
+            color: #2ecc71;
+        }
+        
+        .status-stopped {
+            color: #e74c3c;
+        }
+        
+        #prosodic-frame {
+            width: 100%;
+            height: calc(100% - 60px);
+            border: none;
+        }
+        
+        #server-instructions {
+            padding: 20px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            display: none;
+        }
+        
+        #server-instructions code {
+            background-color: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #server-instructions button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #server-instructions button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Prosodic Poetry Analysis</h1>
+        <div id="server-status">Checking server status...</div>
+    </div>
+    
+    <iframe id="prosodic-frame" src="http://127.0.0.1:8181/" title="Prosodic Web Interface"></iframe>
+    
+    <div id="server-instructions">
+        <h2>Prosodic Server Not Running</h2>
+        <p>To use the Prosodic poetry analysis tool, you need to start the Prosodic server:</p>
+        <p>Open a terminal window and run:</p>
+        <code>cd /Users/paul/PoetryAnalysis/prosodic && prosodic web</code>
+        <p>Then refresh this page to connect to the Prosodic interface.</p>
+        <button id="retry-button">Check Again</button>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const serverStatus = document.getElementById('server-status');
+            const prosodicFrame = document.getElementById('prosodic-frame');
+            const serverInstructions = document.getElementById('server-instructions');
+            const retryButton = document.getElementById('retry-button');
+            
+            function checkServerStatus() {
+                // Try to fetch the Prosodic server status
+                fetch('http://127.0.0.1:8181/', { method: 'HEAD', mode: 'no-cors' })
+                    .then(() => {
+                        // If we get here, the server is probably running
+                        serverStatus.textContent = 'Server Status: Running';
+                        serverStatus.className = 'status-running';
+                        prosodicFrame.style.display = 'block';
+                        serverInstructions.style.display = 'none';
+                    })
+                    .catch(error => {
+                        // If we get an error, the server is probably not running
+                        serverStatus.textContent = 'Server Status: Not Running';
+                        serverStatus.className = 'status-stopped';
+                        prosodicFrame.style.display = 'none';
+                        serverInstructions.style.display = 'block';
+                        console.error('Error checking server status:', error);
+                    });
+            }
+            
+            // Check server status on page load
+            checkServerStatus();
+            
+            // Add event listener for retry button
+            retryButton.addEventListener('click', function() {
+                checkServerStatus();
+            });
+            
+            // Check server status every 10 seconds
+            setInterval(checkServerStatus, 10000);
+        });
+    </script>
+</body>
+</html>

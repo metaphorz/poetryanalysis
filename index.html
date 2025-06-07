@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poem Scansion Analysis</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Poem Scansion Analysis</h1>
+            <p>Drag and drop your poem or paste it below for analysis using three different scansion tools.</p>
+            <div class="splash-image">
+                <img src="scansion-annabel-lee.jpg" alt="Scansion of Annabel Lee" class="scansion-image">
+            </div>
+        </header>
+
+        <div class="upload-container" id="drop-area">
+            <div class="upload-instructions">
+                <p>Drag & Drop Poem Here</p>
+                <p>or</p>
+                <label for="file-input" class="file-input-label">Choose a File</label>
+                <input type="file" id="file-input" accept=".txt" style="display: none;">
+                <p>or</p>
+                <p>Paste your poem below</p>
+            </div>
+        </div>
+
+        <div class="poem-input-container">
+            <textarea id="poem-text" placeholder="Enter your poem here..."></textarea>
+            <button id="analyze-btn">Analyze Poem</button>
+        </div>
+
+        <div class="results-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="poetry-tools">Poetry-Tools</button>
+                <button class="tab-btn" data-tab="zeuscansion">ZeuScansion</button>
+                <button class="tab-btn" data-tab="prosodic">Prosodic</button>
+                <button class="tab-btn" data-tab="comparison">Comparison</button>
+            </div>
+            <div class="tab-content">
+                <div id="poetry-tools" class="tab-pane active">
+                    <h2>Poetry-Tools Analysis</h2>
+                    <div class="loading-indicator" id="poetry-tools-loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing with Poetry-Tools...</p>
+                    </div>
+                    <div class="result-content" id="poetry-tools-result"></div>
+                </div>
+                <div id="zeuscansion" class="tab-pane">
+                    <h2>ZeuScansion Analysis</h2>
+                    <div class="loading-indicator" id="zeuscansion-loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing with ZeuScansion...</p>
+                    </div>
+                    <div class="result-content" id="zeuscansion-result"></div>
+                </div>
+                <div id="prosodic" class="tab-pane">
+                    <h2>Prosodic Analysis</h2>
+                    <div class="loading-indicator" id="prosodic-loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing with Prosodic...</p>
+                    </div>
+                    <div class="result-content" id="prosodic-result"></div>
+                </div>
+                <div id="comparison" class="tab-pane">
+                    <h2>Comparison of Results</h2>
+                    <div class="loading-indicator" id="comparison-loading">
+                        <div class="spinner"></div>
+                        <p>Generating comparison...</p>
+                    </div>
+                    <div class="result-content" id="comparison-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
