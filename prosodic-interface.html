@@ -224,6 +224,83 @@ With darkness and the death-hour rounding it`
             const loadPoemBtn = document.getElementById('load-poem-btn');
             const poemFile = document.getElementById('poem-file');
             
+            // Add direct load functionality
+            const directLoadButton = document.createElement('button');
+            directLoadButton.textContent = 'Direct Load';
+            directLoadButton.style.backgroundColor = '#27ae60';
+            directLoadButton.style.marginLeft = '10px';
+            directLoadButton.style.padding = '5px 15px';
+            directLoadButton.style.color = 'white';
+            directLoadButton.style.border = 'none';
+            directLoadButton.style.borderRadius = '4px';
+            directLoadButton.style.cursor = 'pointer';
+            
+            directLoadButton.addEventListener('click', function() {
+                if (poemSelector.value && poems[poemSelector.value]) {
+                    // Open a new window with the Prosodic interface
+                    const poemWindow = window.open('http://127.0.0.1:8181/', '_blank');
+                    
+                    // Store the poem text in localStorage for the new window to access
+                    localStorage.setItem('poemToLoad', poems[poemSelector.value]);
+                    
+                    alert('A new window with Prosodic will open. Please paste your poem from the clipboard.');
+                    
+                    // Copy the poem to clipboard
+                    navigator.clipboard.writeText(poems[poemSelector.value])
+                        .then(() => {
+                            console.log('Text copied to clipboard');
+                        })
+                        .catch(err => {
+                            console.error('Could not copy text: ', err);
+                        });
+                } else {
+                    alert('Please select a poem first');
+                }
+            });
+            
+            // Add a debug button to inspect the iframe structure
+            const debugButton = document.createElement('button');
+            debugButton.textContent = 'Debug UI';
+            debugButton.style.backgroundColor = '#f39c12';
+            debugButton.style.marginLeft = '10px';
+            debugButton.style.padding = '5px 15px';
+            debugButton.style.color = 'white';
+            debugButton.style.border = 'none';
+            debugButton.style.borderRadius = '4px';
+            debugButton.style.cursor = 'pointer';
+            
+            debugButton.addEventListener('click', function() {
+                try {
+                    const iframeDoc = prosodicFrame.contentDocument || prosodicFrame.contentWindow.document;
+                    
+                    // Log all textareas and their parent elements
+                    const textareas = iframeDoc.querySelectorAll('textarea');
+                    console.log('Found', textareas.length, 'textareas:');
+                    textareas.forEach((ta, i) => {
+                        console.log(`Textarea ${i}:`, ta);
+                        console.log(`Textarea ${i} parent:`, ta.parentElement);
+                        console.log(`Textarea ${i} parent ID:`, ta.parentElement.id);
+                    });
+                    
+                    // Log all buttons
+                    const buttons = iframeDoc.querySelectorAll('button');
+                    console.log('Found', buttons.length, 'buttons:');
+                    buttons.forEach((btn, i) => {
+                        console.log(`Button ${i}:`, btn);
+                        console.log(`Button ${i} text:`, btn.textContent);
+                        console.log(`Button ${i} classes:`, btn.className);
+                    });
+                    
+                    alert(`Found ${textareas.length} textareas and ${buttons.length} buttons. Check browser console for details.`);
+                } catch (error) {
+                    console.error('Debug error:', error);
+                    alert('Could not access iframe content for debugging.');
+                }
+            });
+            
+            document.getElementById('poem-loader').appendChild(directLoadButton);
+            document.getElementById('poem-loader').appendChild(debugButton);
+            
             loadPoemBtn.addEventListener('click', function() {
                 if (poemSelector.value === 'poem3') {
                     // For custom poem, trigger file input
@@ -247,32 +324,124 @@ With darkness and the death-hour rounding it`
             });
             
             function loadPoemIntoFrame(poemText) {
-                // Wait for iframe to load
-                prosodicFrame.onload = function() {
-                    setTimeout(function() {
-                        // Get the iframe's document
-                        const iframeDoc = prosodicFrame.contentDocument || prosodicFrame.contentWindow.document;
-                        
-                        // Find the textarea for poem input
-                        const textarea = iframeDoc.querySelector('textarea');
-                        if (textarea) {
-                            // Set the poem text
-                            textarea.value = poemText;
-                            
-                            // Trigger the textarea's input event to activate the UI
-                            const inputEvent = new Event('input', { bubbles: true });
-                            textarea.dispatchEvent(inputEvent);
-                            
-                            console.log('Poem loaded successfully');
-                        } else {
-                            console.error('Could not find textarea in Prosodic interface');
-                        }
-                    }, 1000); // Give the iframe a moment to fully initialize
-                };
-                
-                // Reload the iframe to ensure a clean state
-                prosodicFrame.src = prosodicFrame.src;
+                try {
+                    // First approach: Try direct iframe access
+                    tryDirectIframeAccess(poemText);
+                    
+                    // Second approach: Try using postMessage API
+                    tryPostMessageAPI(poemText);
+                    
+                    // Third approach: Copy to clipboard and notify user
+                    copyToClipboardAndNotify(poemText);
+                    
+                } catch (error) {
+                    console.error('Error in loadPoemIntoFrame:', error);
+                    alert('Could not automatically load the poem. The poem has been copied to your clipboard - please paste it into the interface manually.');
+                }
             }
+            
+            function tryDirectIframeAccess(poemText) {
+                try {
+                    // Access the iframe content directly
+                    const iframeDoc = prosodicFrame.contentDocument || prosodicFrame.contentWindow.document;
+                    
+                    // Try various selectors that might find the textarea
+                    const selectors = [
+                        'textarea', 
+                        '#prosodic-input textarea', 
+                        '.CodeMirror textarea',
+                        'form textarea',
+                        'div.input-area textarea',
+                        'div[contenteditable=true]'
+                    ];
+                    
+                    let element = null;
+                    
+                    // Try each selector
+                    for (const selector of selectors) {
+                        const elements = iframeDoc.querySelectorAll(selector);
+                        if (elements.length > 0) {
+                            element = elements[0];
+                            console.log('Found element with selector:', selector);
+                            break;
+                        }
+                    }
+                    
+                    if (element) {
+                        // If it's a textarea
+                        if (element.tagName === 'TEXTAREA') {
+                            element.value = poemText;
+                            element.dispatchEvent(new Event('input', { bubbles: true }));
+                            element.dispatchEvent(new Event('change', { bubbles: true }));
+                        } 
+                        // If it's a contenteditable div
+                        else if (element.getAttribute('contenteditable') === 'true') {
+                            element.innerHTML = poemText.replace(/\n/g, '<br>');
+                            element.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        
+                        console.log('Text set via direct access');
+                        return true;
+                    }
+                    
+                    return false;
+                } catch (error) {
+                    console.error('Error in tryDirectIframeAccess:', error);
+                    return false;
+                }
+            }
+            
+            function tryPostMessageAPI(poemText) {
+                try {
+                    // Try using postMessage to communicate with the iframe
+                    prosodicFrame.contentWindow.postMessage({
+                        action: 'loadPoem',
+                        text: poemText
+                    }, 'http://127.0.0.1:8181');
+                    
+                    console.log('Message posted to iframe');
+                    return true;
+                } catch (error) {
+                    console.error('Error in tryPostMessageAPI:', error);
+                    return false;
+                }
+            }
+            
+            function copyToClipboardAndNotify(poemText) {
+                // Copy the poem to clipboard as a fallback
+                navigator.clipboard.writeText(poemText)
+                    .then(() => {
+                        console.log('Poem copied to clipboard');
+                    })
+                    .catch(err => {
+                        console.error('Could not copy text: ', err);
+                    });
+                
+                // Show a subtle notification
+                const notification = document.createElement('div');
+                notification.textContent = 'Poem copied to clipboard - paste it in the text area';
+                notification.style.position = 'fixed';
+                notification.style.bottom = '20px';
+                notification.style.left = '50%';
+                notification.style.transform = 'translateX(-50%)';
+                notification.style.backgroundColor = '#3498db';
+                notification.style.color = 'white';
+                notification.style.padding = '10px 20px';
+                notification.style.borderRadius = '5px';
+                notification.style.zIndex = '1000';
+                
+                document.body.appendChild(notification);
+                
+                // Remove the notification after a few seconds
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.5s';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 500);
+                }, 3000);
+            }
+            
         });
     </script>
 </body>
