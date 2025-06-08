@@ -2,6 +2,16 @@
 
 This application provides a user-friendly interface for analyzing poetry using Prosodic, a metrical-phonological parser.
 
+## Installation
+
+To get the full project with all required components including the Prosodic module, use the following commands:
+
+```bash
+git clone https://github.com/metaphorz/poetryanalysis.git
+cd poetryanalysis
+git submodule update --init --recursive
+```
+
 ## Setup
 
 1. Ensure you have Python 3.9 or higher installed
