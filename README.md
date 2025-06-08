@@ -10,7 +10,12 @@ To get the full project with all required components including the Prosodic modu
 git clone https://github.com/metaphorz/poetryanalysis.git
 cd poetryanalysis
 git submodule update --init --recursive
+
+# Run the application
+./go
 ```
+
+This will start the Prosodic server and open the web interface in your default browser.
 
 ## Setup
 
