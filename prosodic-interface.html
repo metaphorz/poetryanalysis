@@ -224,82 +224,7 @@ With darkness and the death-hour rounding it`
             const loadPoemBtn = document.getElementById('load-poem-btn');
             const poemFile = document.getElementById('poem-file');
             
-            // Add direct load functionality
-            const directLoadButton = document.createElement('button');
-            directLoadButton.textContent = 'Direct Load';
-            directLoadButton.style.backgroundColor = '#27ae60';
-            directLoadButton.style.marginLeft = '10px';
-            directLoadButton.style.padding = '5px 15px';
-            directLoadButton.style.color = 'white';
-            directLoadButton.style.border = 'none';
-            directLoadButton.style.borderRadius = '4px';
-            directLoadButton.style.cursor = 'pointer';
-            
-            directLoadButton.addEventListener('click', function() {
-                if (poemSelector.value && poems[poemSelector.value]) {
-                    // Open a new window with the Prosodic interface
-                    const poemWindow = window.open('http://127.0.0.1:8181/', '_blank');
-                    
-                    // Store the poem text in localStorage for the new window to access
-                    localStorage.setItem('poemToLoad', poems[poemSelector.value]);
-                    
-                    alert('A new window with Prosodic will open. Please paste your poem from the clipboard.');
-                    
-                    // Copy the poem to clipboard
-                    navigator.clipboard.writeText(poems[poemSelector.value])
-                        .then(() => {
-                            console.log('Text copied to clipboard');
-                        })
-                        .catch(err => {
-                            console.error('Could not copy text: ', err);
-                        });
-                } else {
-                    alert('Please select a poem first');
-                }
-            });
-            
-            // Add a debug button to inspect the iframe structure
-            const debugButton = document.createElement('button');
-            debugButton.textContent = 'Debug UI';
-            debugButton.style.backgroundColor = '#f39c12';
-            debugButton.style.marginLeft = '10px';
-            debugButton.style.padding = '5px 15px';
-            debugButton.style.color = 'white';
-            debugButton.style.border = 'none';
-            debugButton.style.borderRadius = '4px';
-            debugButton.style.cursor = 'pointer';
-            
-            debugButton.addEventListener('click', function() {
-                try {
-                    const iframeDoc = prosodicFrame.contentDocument || prosodicFrame.contentWindow.document;
-                    
-                    // Log all textareas and their parent elements
-                    const textareas = iframeDoc.querySelectorAll('textarea');
-                    console.log('Found', textareas.length, 'textareas:');
-                    textareas.forEach((ta, i) => {
-                        console.log(`Textarea ${i}:`, ta);
-                        console.log(`Textarea ${i} parent:`, ta.parentElement);
-                        console.log(`Textarea ${i} parent ID:`, ta.parentElement.id);
-                    });
-                    
-                    // Log all buttons
-                    const buttons = iframeDoc.querySelectorAll('button');
-                    console.log('Found', buttons.length, 'buttons:');
-                    buttons.forEach((btn, i) => {
-                        console.log(`Button ${i}:`, btn);
-                        console.log(`Button ${i} text:`, btn.textContent);
-                        console.log(`Button ${i} classes:`, btn.className);
-                    });
-                    
-                    alert(`Found ${textareas.length} textareas and ${buttons.length} buttons. Check browser console for details.`);
-                } catch (error) {
-                    console.error('Debug error:', error);
-                    alert('Could not access iframe content for debugging.');
-                }
-            });
-            
-            document.getElementById('poem-loader').appendChild(directLoadButton);
-            document.getElementById('poem-loader').appendChild(debugButton);
+            // Poem loading functionality is handled by the Load Poem button
             
             loadPoemBtn.addEventListener('click', function() {
                 if (poemSelector.value === 'poem3') {
@@ -325,18 +250,43 @@ With darkness and the death-hour rounding it`
             
             function loadPoemIntoFrame(poemText) {
                 try {
-                    // First approach: Try direct iframe access
-                    tryDirectIframeAccess(poemText);
+                    // Reload the iframe with a URL parameter containing the poem text
+                    // First, encode the poem text for URL inclusion
+                    const encodedPoemText = encodeURIComponent(poemText);
                     
-                    // Second approach: Try using postMessage API
-                    tryPostMessageAPI(poemText);
+                    // Create a new URL that includes the poem as a parameter
+                    const newURL = `http://127.0.0.1:8181/?poem=${encodedPoemText}`;
                     
-                    // Third approach: Copy to clipboard and notify user
-                    copyToClipboardAndNotify(poemText);
+                    // Update the src attribute of the iframe
+                    console.log('Reloading iframe with poem URL parameter');
+                    prosodicFrame.src = newURL;
+                    
+                    // Set a flag in localStorage to indicate we're trying to load a poem
+                    localStorage.setItem('loadingPoem', 'true');
+                    localStorage.setItem('poemToLoad', poemText);
+                    
+                    // Show a loading message to the user
+                    const notification = document.createElement('div');
+                    notification.textContent = 'Loading poem...';
+                    notification.style.position = 'fixed';
+                    notification.style.bottom = '20px';
+                    notification.style.left = '50%';
+                    notification.style.transform = 'translateX(-50%)';
+                    notification.style.backgroundColor = '#27ae60'; // Green
+                    notification.style.color = 'white';
+                    notification.style.padding = '10px 20px';
+                    notification.style.borderRadius = '5px';
+                    notification.style.zIndex = '1000';
+                    document.body.appendChild(notification);
+                    
+                    // Remove the notification after a few seconds
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 3000);
                     
                 } catch (error) {
                     console.error('Error in loadPoemIntoFrame:', error);
-                    alert('Could not automatically load the poem. The poem has been copied to your clipboard - please paste it into the interface manually.');
+                    alert('Could not load the poem. Please try again or paste it manually.');
                 }
             }
             
@@ -345,45 +295,116 @@ With darkness and the death-hour rounding it`
                     // Access the iframe content directly
                     const iframeDoc = prosodicFrame.contentDocument || prosodicFrame.contentWindow.document;
                     
-                    // Try various selectors that might find the textarea
-                    const selectors = [
-                        'textarea', 
-                        '#prosodic-input textarea', 
-                        '.CodeMirror textarea',
-                        'form textarea',
-                        'div.input-area textarea',
-                        'div[contenteditable=true]'
-                    ];
-                    
+                    // Specifically target the inputtext textarea in the Prosodic interface
+                    // This is the main poem input area based on the actual Prosodic HTML template
                     let element = null;
                     
-                    // Try each selector
-                    for (const selector of selectors) {
-                        const elements = iframeDoc.querySelectorAll(selector);
-                        if (elements.length > 0) {
-                            element = elements[0];
-                            console.log('Found element with selector:', selector);
-                            break;
+                    // Try to find the specific textarea with id="inputtext"
+                    try {
+                        element = iframeDoc.getElementById('inputtext');
+                        if (element) {
+                            console.log('Found the main textarea with id="inputtext"');
+                        } else {
+                            console.log('Could not find textarea with id="inputtext"');
+                        }
+                    } catch (err) {
+                        console.error('Error finding inputtext:', err);
+                    }
+                    
+                    // If the specific ID wasn't found, try to find any textarea in a form with id="inputform"
+                    if (!element) {
+                        const inputForm = iframeDoc.getElementById('inputform');
+                        if (inputForm) {
+                            const textareas = inputForm.querySelectorAll('textarea');
+                            if (textareas.length > 0) {
+                                element = textareas[0]; // First textarea in the inputform
+                                console.log('Found main textarea in inputform');
+                            }
+                        }
+                    }
+                    
+                    // If we didn't find it with the specific approach, try these general selectors
+                    if (!element) {
+                        const selectors = [
+                            'textarea[name="poem"]', // Look for a textarea with name "poem"
+                            'form textarea', // Any textarea within a form
+                            'textarea', // Any textarea
+                            '#prosodic-input textarea',
+                            '.CodeMirror textarea',
+                            'div.input-area textarea',
+                            'div[contenteditable=true]'
+                        ];
+                        
+                        // Try each selector
+                        for (const selector of selectors) {
+                            const elements = iframeDoc.querySelectorAll(selector);
+                            if (elements.length > 0) {
+                                element = elements[0];
+                                console.log('Found element with selector:', selector);
+                                break;
+                            }
                         }
                     }
                     
                     if (element) {
-                        // If it's a textarea
-                        if (element.tagName === 'TEXTAREA') {
-                            element.value = poemText;
-                            element.dispatchEvent(new Event('input', { bubbles: true }));
-                            element.dispatchEvent(new Event('change', { bubbles: true }));
-                        } 
-                        // If it's a contenteditable div
-                        else if (element.getAttribute('contenteditable') === 'true') {
-                            element.innerHTML = poemText.replace(/\n/g, '<br>');
-                            element.dispatchEvent(new Event('input', { bubbles: true }));
+                        try {
+                            // If it's a textarea
+                            if (element.tagName === 'TEXTAREA') {
+                                element.value = poemText;
+                                element.dispatchEvent(new Event('input', { bubbles: true }));
+                                element.dispatchEvent(new Event('change', { bubbles: true }));
+                                // Also try to trigger various events that might refresh the UI
+                                if (element.form) {
+                                    // If the textarea is in a form, attempt to submit it
+                                    setTimeout(() => {
+                                        const submitBtn = iframeDoc.querySelector('form button[type="submit"]');
+                                        if (submitBtn) {
+                                            console.log('Found submit button, clicking it');
+                                            submitBtn.click();
+                                        }
+                                    }, 100);
+                                }
+                            } 
+                            // If it's a contenteditable div
+                            else if (element.getAttribute('contenteditable') === 'true') {
+                                element.innerHTML = poemText.replace(/\n/g, '<br>');
+                                element.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            
+                            // Also try to find and click an analyze button if available
+                            setTimeout(() => {
+                                // Try different ways to find an analyze button
+                                let analyzeBtn = null;
+                                
+                                // Try by text content
+                                const allButtons = iframeDoc.querySelectorAll('button, input[type="submit"]');
+                                for (const btn of allButtons) {
+                                    if (btn.textContent && btn.textContent.toLowerCase().includes('analyze')) {
+                                        analyzeBtn = btn;
+                                        break;
+                                    }
+                                }
+                                
+                                // If not found by text, try by ID
+                                if (!analyzeBtn) {
+                                    analyzeBtn = iframeDoc.querySelector('button[id*="analyze"], input[type="submit"]');
+                                }
+                                
+                                if (analyzeBtn) {
+                                    console.log('Found analyze button, clicking it');
+                                    analyzeBtn.click();
+                                }
+                            }, 500); // Increased timeout to ensure the DOM is ready
+                            
+                            console.log('Text set via direct access');
+                            return true;
+                        } catch (err) {
+                            console.error('Error setting text in element:', err);
+                            return false;
                         }
-                        
-                        console.log('Text set via direct access');
-                        return true;
                     }
                     
+                    console.log('No suitable element found for direct access');
                     return false;
                 } catch (error) {
                     console.error('Error in tryDirectIframeAccess:', error);

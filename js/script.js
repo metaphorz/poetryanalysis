@@ -115,13 +115,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function analyzePoemWithProsodic(poem) {
+        // Get the state of the vowel syllabification checkbox
+        const improveVowelSyllables = document.getElementById('improve-vowel-syllables').checked;
+        
         // Call the prosodic web service
         fetch('http://127.0.0.1:8181/api/parse', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ text: poem }),
+            body: JSON.stringify({ 
+                text: poem,
+                improveVowelSyllables: improveVowelSyllables
+            }),
         })
         .then(response => {
             if (!response.ok) {
