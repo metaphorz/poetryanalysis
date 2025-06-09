@@ -1,6 +1,6 @@
 # Poetry Analysis Tool
 
-This application provides a user-friendly interface for analyzing poetry using Prosodic, a metrical-phonological parser.
+This application provides a user-friendly interface for analyzing poetry using Prosodic, a metrical-phonological parser. It includes both a web interface for interactive poem exploration and a command-line tool for direct meter and rhyme analysis.
 
 ## Installation
 
@@ -27,7 +27,7 @@ This will start the Prosodic server and open the web interface in your default b
 
 ## Starting the Application
 
-### Quick Start (Recommended)
+### Web Interface
 
 Simply run the `go` script:
 
@@ -40,11 +40,22 @@ This script will:
 2. Open the web interface in your default browser
 3. Keep the server running in the background
 
+### Command-Line Analysis
+
+To analyze a poem directly from the command line:
+
+```
+./analyze poems/Poem1.txt
+```
+
+This will run the Analysis.py script with improved syllabification and pattern overrides, displaying meter and rhyme analysis in the terminal.
+
+Options:
+- `--improve-syllabification`: Enable improved vowel syllabification (automatically enabled by default)
+
 ### Manual Start Options
 
-If you prefer to start components manually, you have these options:
-
-#### Option 1: Direct Prosodic Interface
+If you prefer to start components manually:
 
 1. Start the Prosodic server:
    ```
@@ -57,23 +68,31 @@ If you prefer to start components manually, you have these options:
    - This provides a direct interface to the Prosodic web tool
    - The page will automatically detect if the server is running
 
-#### Option 2: Custom Interface
+## Project Structure
 
-1. Start the Prosodic server:
-   ```
-   python start_prosodic_server.py
-   ```
-   
-2. Open `index.html` in your web browser to use the custom interface
+- `prosodic/` - The Prosodic library
+- `poems/` - Sample poem text files
+- `prosodic-interface.html` - Web interface for the Prosodic tool
+- `Analysis.py` - Core analysis script for meter and rhyme
+- `analyze` - Command-line script for poem analysis
+- `go` - Script to start the Prosodic server and web interface
+- `kill` - Script to stop the Prosodic server
 
-## Features of Prosodic
+## Features
 
+### Web Interface
 - Upload poem files (.txt)
 - Paste poem text directly
 - Analyze poems using advanced metrical-phonological parsing
 - View detailed stress and meter patterns
 - Explore multiple parsing options
-- Support for English and Finnish text
+
+### Command-Line Analysis
+- Direct meter and rhyme analysis of poem files
+- Improved syllabification with pattern overrides for words like "iambs"
+- Clear visualization of stress patterns
+- Rhyme scheme detection
+- Support for English text
 
 ## About Prosodic
 

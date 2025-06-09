@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Analyze - A simple script to run poetry analysis on a poem file
+# Usage: ./analyze [poem_file] [options]
+
+# Set the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if a poem file was provided
+if [ $# -eq 0 ]; then
+    echo "Usage: ./analyze [poem_file] [options]"
+    echo "Options:"
+    echo "  --improve-syllabification  Enable improved vowel syllabification (Dipthong Break)"
+    echo ""
+    echo "Example: ./analyze poem1.txt --improve-syllabification"
+    exit 1
+fi
+
+# Set PYTHONPATH to ensure prosodic module can be found
+export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
+
+# Run the Analysis.py script with the provided arguments
+# The --improve-syllabification flag is always passed to ensure proper handling of words like "iambs"
+python3 "$SCRIPT_DIR/Analysis.py" "$@" --improve-syllabification
+
+# Exit with the same status as the Python script
+exit $?

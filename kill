@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Script to kill all poetry analysis related processes
+echo "Stopping Poetry Analysis processes..."
+
+# Kill the Prosodic server
+echo "Stopping Prosodic server..."
+pkill -f "prosodic web" || echo "No Prosodic server running"
+
+# Note: Analysis server has been removed in favor of command-line approach
+
+echo ""
+echo "All Poetry Analysis processes have been terminated."
+echo "Run ./go to restart the Prosodic server."

@@ -16,6 +16,8 @@ check_server_running() {
     fi
 }
 
+# Analysis server functionality removed - now using command-line approach with ./analyze script
+
 # Function to open the web page in the default browser
 open_browser() {
     echo "Opening web interface in your default browser..."
@@ -38,6 +40,8 @@ open_browser() {
         echo "Could not open browser automatically. Please open this file manually: $HTML_FILE"
     fi
 }
+
+# Analysis server start function removed - now using command-line approach with ./analyze script
 
 # Function to start the Prosodic server
 start_server() {
@@ -88,7 +92,7 @@ echo "============================"
 if check_server_running; then
     echo "Prosodic server is already running on port 8181."
 else
-    # Start the server
+    # Start the Prosodic server
     start_server
 fi
 
@@ -96,8 +100,11 @@ fi
 open_browser
 
 echo ""
-echo "The Prosodic server is running in the background."
+echo "The Prosodic server (port 8181) is running in the background."
 echo "To stop it, you can use the command: killall prosodic"
 echo "Or close the terminal window."
+echo ""
+echo "For meter and rhyme analysis, use the ./analyze script from the command line:"
+echo "  ./analyze poem_file.txt"
 echo ""
 echo "Enjoy analyzing your poems!"
